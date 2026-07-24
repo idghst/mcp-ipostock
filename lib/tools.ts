@@ -6,10 +6,14 @@ import type { DatabaseGateway } from "./database.ts";
 export function registerSupabaseTools(
   server: McpServer,
   database: DatabaseGateway,
+  allowedTables: ReadonlySet<string>,
 ) {
   const identifier = z
     .string()
     .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "Use a plain SQL identifier");
+  const table = z.enum(
+    [...allowedTables] as [string, ...string[]],
+  );
   const columns = z
     .array(z.union([z.literal("*"), identifier]))
     .min(1)
@@ -57,7 +61,7 @@ export function registerSupabaseTools(
       description:
         "Read rows from an allowed Supabase table using equality filters.",
       inputSchema: {
-        table: identifier,
+        table,
         columns,
         filters: filters.default({}),
         limit: z.number().int().min(1).max(100).default(50),
@@ -82,7 +86,7 @@ export function registerSupabaseTools(
       title: "Insert Supabase rows",
       description: "Insert up to 100 rows into an allowed Supabase table.",
       inputSchema: {
-        table: identifier,
+        table,
         rows: z.array(row).min(1).max(100),
       },
       annotations: {
@@ -107,7 +111,7 @@ export function registerSupabaseTools(
       description:
         "Update rows in an allowed Supabase table. At least one equality filter is required.",
       inputSchema: {
-        table: identifier,
+        table,
         values: row.refine(
           (value) => Object.keys(value).length > 0,
           "At least one value is required",

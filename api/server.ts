@@ -22,6 +22,7 @@ function getMcpHandler() {
       registerSupabaseTools(
         server,
         createDatabaseGateway(client, config.allowedTables),
+        config.allowedTables,
       );
     },
     {
