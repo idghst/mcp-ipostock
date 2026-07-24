@@ -37,7 +37,7 @@ openssl rand -hex 32
 
 ## 로컬 실행
 
-요구사항: Node.js 22 이상.
+요구사항: Node.js 24.
 
 ```bash
 npm ci
@@ -90,7 +90,7 @@ npx vercel@57.0.0 env add SUPABASE_ALLOWED_TABLES preview
 npx vercel@57.0.0 env add MCP_API_KEY preview
 ```
 
-Vercel Dashboard의 Project Settings에서 Node.js 22 이상과 Supabase에 가까운 Function Region도 확인합니다. Preview Deployment Protection이 켜져 있으면 외부 MCP 클라이언트의 요청이 Vercel 인증 화면에서 차단될 수 있습니다.
+Vercel Dashboard의 Project Settings에서 Node.js 24와 Supabase에 가까운 Function Region도 확인합니다. Preview Deployment Protection이 켜져 있으면 외부 MCP 클라이언트의 요청이 Vercel 인증 화면에서 차단될 수 있습니다.
 
 ### 3. Production 배포
 
