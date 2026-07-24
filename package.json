@@ -1,0 +1,24 @@
+{
+  "name": "mcp-ipostock",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npx --yes vercel@57.0.0 dev",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "@supabase/supabase-js": "2.110.8",
+    "mcp-handler": "1.1.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.1",
+    "typescript": "7.0.2"
+  }
+}
