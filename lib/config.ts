@@ -19,12 +19,21 @@ export function loadConfig(
     .filter(Boolean);
 
   if (!supabaseUrl) throw new Error("SUPABASE_URL is required");
+  try {
+    const url = new URL(supabaseUrl);
+    if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+  } catch {
+    throw new Error("SUPABASE_URL must be a valid HTTP or HTTPS URL");
+  }
   if (!supabaseKey) {
     throw new Error(
       "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required",
     );
   }
   if (!mcpApiKey) throw new Error("MCP_API_KEY is required");
+  if (mcpApiKey.length < 32) {
+    throw new Error("MCP_API_KEY must be at least 32 characters");
+  }
   if (
     !tableNames?.length ||
     tableNames.some((table) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(table))

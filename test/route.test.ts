@@ -7,7 +7,7 @@ const validEnv = {
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SECRET_KEY: "sb_secret_example",
   SUPABASE_ALLOWED_TABLES: "todos",
-  MCP_API_KEY: "mcp-secret",
+  MCP_API_KEY: "0123456789abcdef0123456789abcdef",
 };
 
 test("MCP route rejects requests when env is incomplete", async () => {
