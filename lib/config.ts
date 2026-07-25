@@ -30,6 +30,11 @@ export function loadConfig(
       "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required",
     );
   }
+  if (supabaseKey.startsWith("sb_publishable_")) {
+    throw new Error(
+      "SUPABASE_SECRET_KEY cannot use a publishable key",
+    );
+  }
   if (!mcpApiKey) throw new Error("MCP_API_KEY is required");
   if (mcpApiKey.length < 32) {
     throw new Error("MCP_API_KEY must be at least 32 characters");

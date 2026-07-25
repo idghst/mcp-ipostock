@@ -3,6 +3,7 @@ import { createMcpHandler } from "mcp-handler";
 
 import { loadConfig } from "../lib/config.ts";
 import { createDatabaseGateway } from "../lib/database.ts";
+import { createSchemaGateway } from "../lib/schema.ts";
 import { isAuthorized } from "../lib/security.ts";
 import { registerSupabaseTools } from "../lib/tools.ts";
 
@@ -22,6 +23,11 @@ function getMcpHandler() {
       registerSupabaseTools(
         server,
         createDatabaseGateway(client, config.allowedTables),
+        createSchemaGateway({
+          supabaseUrl: config.supabaseUrl,
+          supabaseKey: config.supabaseKey,
+          allowedTables: config.allowedTables,
+        }),
         config.allowedTables,
       );
     },

@@ -1,5 +1,32 @@
 export type FilterValue = string | number | boolean | null;
 
+export type QueryCondition =
+  | {
+      column: string;
+      operator: "eq" | "neq" | "gt" | "gte" | "lt" | "lte";
+      value: FilterValue;
+    }
+  | {
+      column: string;
+      operator: "like" | "ilike";
+      value: string;
+    }
+  | {
+      column: string;
+      operator: "in";
+      value: Exclude<FilterValue, null>[];
+    }
+  | {
+      column: string;
+      operator: "is";
+      value: boolean | null;
+    };
+
+export type QueryOrder = {
+  column: string;
+  direction: "asc" | "desc";
+};
+
 type DatabaseClient = {
   from(table: string): any;
 };
@@ -8,7 +35,10 @@ export type SelectInput = {
   table: string;
   columns: string[];
   filters: Record<string, FilterValue>;
+  conditions: QueryCondition[];
+  orderBy: QueryOrder[];
   limit: number;
+  offset: number;
 };
 
 export type InsertInput = {
@@ -43,6 +73,19 @@ export function createDatabaseGateway(
     return query;
   };
 
+  const conditioned = (
+    query: any,
+    conditions: QueryCondition[],
+  ) => {
+    for (const condition of conditions) {
+      query = query[condition.operator](
+        condition.column,
+        condition.value,
+      );
+    }
+    return query;
+  };
+
   const data = async (query: any) => {
     const result = await query;
     if (result.error) {
@@ -53,11 +96,24 @@ export function createDatabaseGateway(
 
   return {
     async selectRows(input: SelectInput): Promise<unknown> {
-      const query = filtered(
-        table(input.table).select(input.columns.join(",")),
-        input.filters,
-      ).limit(input.limit);
-      return data(query);
+      let query = conditioned(
+        filtered(
+          table(input.table).select(input.columns.join(",")),
+          input.filters,
+        ),
+        input.conditions,
+      );
+      for (const order of input.orderBy) {
+        query = query.order(order.column, {
+          ascending: order.direction === "asc",
+        });
+      }
+      return data(
+        query.range(
+          input.offset,
+          input.offset + input.limit - 1,
+        ),
+      );
     },
     async insertRows(input: InsertInput): Promise<unknown> {
       return data(table(input.table).insert(input.rows).select("*"));

@@ -18,4 +18,6 @@ test("smoke command explains its required deployment URL and API key", () => {
     result.stderr,
     /Usage: MCP_API_KEY=<key> npm run smoke -- https:\/\/<project>\.vercel\.app\/mcp/,
   );
+  assert.match(result.stderr, /MCP_SMOKE_TABLE/);
+  assert.match(result.stderr, /MCP_SMOKE_MIN_ROWS/);
 });

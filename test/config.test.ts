@@ -27,6 +27,19 @@ test("loadConfig accepts the legacy service role key", () => {
   assert.equal(config.supabaseKey, "legacy");
 });
 
+test("loadConfig rejects a publishable key used as the server secret", () => {
+  assert.throws(
+    () =>
+      loadConfig({
+        SUPABASE_URL: "https://example.supabase.co",
+        SUPABASE_SECRET_KEY: "sb_publishable_example",
+        SUPABASE_ALLOWED_TABLES: "todos",
+        MCP_API_KEY: "0123456789abcdef0123456789abcdef",
+      }),
+    /SUPABASE_SECRET_KEY.*publishable/,
+  );
+});
+
 test("loadConfig rejects missing required variables", () => {
   assert.throws(
     () => loadConfig({}),

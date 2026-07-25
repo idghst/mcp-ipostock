@@ -6,11 +6,53 @@ Vercel Function에서 실행되는 stateless Streamable HTTP MCP 서버입니다
 
 | Tool | 기능 | 제한 |
 |---|---|---|
-| `select_rows` | 행 조회 | equality filter, 최대 100행 |
+| `describe_table` | 허용 테이블의 컬럼·타입 조회 | allowlist 밖 metadata 비노출 |
+| `select_rows` | equality·범위·부분 검색, 정렬, pagination | 조건 10개, 정렬 3개, 최대 100행 |
 | `insert_rows` | 행 입력 | 호출당 최대 100행 |
 | `update_rows` | 행 수정 | filter 1개 이상 필수 |
 
 `delete`와 임의 SQL 실행은 제공하지 않습니다.
+
+`select_rows`는 기존 `filters` equality 입력과 함께 다음 입력을 지원합니다.
+
+- `conditions`: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `like`, `ilike`, `in`, `is`
+- `order_by`: `{ column, direction: "asc" | "desc" }` 배열
+- `limit`: 기본 50, 최대 100
+- `offset`: 기본 0
+
+모든 select/insert/update 컬럼은 Supabase Data API schema와 먼저 대조합니다.
+
+## n8n AI Agent 권장 호출 순서
+
+1. `describe_table`로 실제 컬럼명과 타입 확인
+2. `select_rows`로 대상 행 확인
+3. 변경 요청일 때만 `insert_rows` 또는 `update_rows` 호출
+
+한글 컬럼명도 지원합니다. 예:
+
+```json
+{
+  "table": "ipo_stocks",
+  "columns": ["종목명", "청약시작일", "상장일"],
+  "conditions": [
+    {
+      "column": "청약시작일",
+      "operator": "gte",
+      "value": "2026-07-01"
+    },
+    {
+      "column": "종목명",
+      "operator": "ilike",
+      "value": "%테크%"
+    }
+  ],
+  "order_by": [
+    { "column": "청약시작일", "direction": "asc" }
+  ],
+  "limit": 20,
+  "offset": 0
+}
+```
 
 ## 환경 변수
 
@@ -32,6 +74,8 @@ openssl rand -hex 32
 | `MCP_API_KEY` | 필수 | MCP Bearer token, 최소 32자 |
 
 `SUPABASE_ANON_KEY`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_ACCESS_TOKEN`은 이 서버가 사용하지 않습니다.
+
+`sb_publishable_...` 값을 `SUPABASE_SECRET_KEY`에 넣으면 서버가 설정 오류로 거부하며 `/health`와 `/mcp`가 `503`을 반환합니다.
 
 `SUPABASE_SECRET_KEY`/`SUPABASE_SERVICE_ROLE_KEY`는 RLS를 우회할 수 있습니다. 브라우저에 노출하지 말고 `SUPABASE_ALLOWED_TABLES`를 최소 범위로 지정하십시오. 대상 테이블은 Supabase Data API에 노출되어 있어야 하며 `service_role`에 필요한 `SELECT`, `INSERT`, `UPDATE` 권한이 있어야 합니다.
 
@@ -117,9 +161,10 @@ npm run smoke -- https://<project>.vercel.app/mcp
 
 ```dotenv
 MCP_SMOKE_TABLE=your_table
+MCP_SMOKE_MIN_ROWS=1
 ```
 
-이 probe는 `select_rows`를 `limit: 1`로 실행하며 데이터를 수정하지 않습니다.
+이 probe는 `describe_table`과 `select_rows(limit: 1)`를 실행하고 schema 컬럼 수와 반환 행 수를 출력합니다. `MCP_SMOKE_MIN_ROWS`보다 적은 행이 반환되면 실패하며 데이터를 수정하지 않습니다.
 
 문제가 있으면 배포 로그를 확인하고 이전 정상 배포로 되돌립니다.
 
