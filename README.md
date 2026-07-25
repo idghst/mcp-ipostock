@@ -68,16 +68,13 @@ openssl rand -hex 32
 | 이름 | 필수 | 용도 |
 |---|---|---|
 | `SUPABASE_URL` | 필수 | Supabase Project URL |
-| `SUPABASE_SECRET_KEY` | 둘 중 하나 | 권장 server-side secret key |
-| `SUPABASE_SERVICE_ROLE_KEY` | 둘 중 하나 | legacy 대체 키 |
+| `SUPABASE_SERVICE_ROLE_KEY` | 필수 | server-side database 접근 |
 | `SUPABASE_ALLOWED_TABLES` | 필수 | 접근 허용 테이블, 쉼표 구분 |
 | `MCP_API_KEY` | 필수 | MCP Bearer token, 최소 32자 |
 
-`SUPABASE_ANON_KEY`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_ACCESS_TOKEN`은 이 서버가 사용하지 않습니다.
+`SUPABASE_ACCESS_TOKEN`, `SUPABASE_ANON_KEY`, `SUPABASE_PUBLISH_KEY`는 이 서버가 사용하지 않습니다. `SUPABASE_SECRET_KEY`도 하위 호환을 위해 지원하지만 이 설정에서는 사용하지 않습니다.
 
-`sb_publishable_...` 값을 `SUPABASE_SECRET_KEY`에 넣으면 서버가 설정 오류로 거부하며 `/health`와 `/mcp`가 `503`을 반환합니다.
-
-`SUPABASE_SECRET_KEY`/`SUPABASE_SERVICE_ROLE_KEY`는 RLS를 우회할 수 있습니다. 브라우저에 노출하지 말고 `SUPABASE_ALLOWED_TABLES`를 최소 범위로 지정하십시오. 대상 테이블은 Supabase Data API에 노출되어 있어야 하며 `service_role`에 필요한 `SELECT`, `INSERT`, `UPDATE` 권한이 있어야 합니다.
+`SUPABASE_SERVICE_ROLE_KEY`는 RLS를 우회할 수 있습니다. 브라우저에 노출하지 말고 `SUPABASE_ALLOWED_TABLES`를 최소 범위로 지정하십시오. 대상 테이블은 Supabase Data API에 노출되어 있어야 하며 `service_role`에 필요한 `SELECT`, `INSERT`, `UPDATE` 권한이 있어야 합니다.
 
 ## 로컬 실행
 
@@ -116,11 +113,11 @@ npx vercel@57.0.0 link
 
 ### 2. 환경 변수 등록
 
-Production에 아래 4개 값을 등록합니다. `SUPABASE_SECRET_KEY`가 없을 때만 `SUPABASE_SERVICE_ROLE_KEY`를 대신 등록합니다.
+Production에 아래 4개 값을 등록합니다. 기존의 잘못된 `SUPABASE_SECRET_KEY`가 있으면 삭제하십시오.
 
 ```bash
 npx vercel@57.0.0 env add SUPABASE_URL production
-npx vercel@57.0.0 env add SUPABASE_SECRET_KEY production
+npx vercel@57.0.0 env add SUPABASE_SERVICE_ROLE_KEY production
 npx vercel@57.0.0 env add SUPABASE_ALLOWED_TABLES production
 npx vercel@57.0.0 env add MCP_API_KEY production
 ```
@@ -129,7 +126,7 @@ Git 연동 Preview 배포도 검사하려면 같은 값을 `preview` 환경에�
 
 ```bash
 npx vercel@57.0.0 env add SUPABASE_URL preview
-npx vercel@57.0.0 env add SUPABASE_SECRET_KEY preview
+npx vercel@57.0.0 env add SUPABASE_SERVICE_ROLE_KEY preview
 npx vercel@57.0.0 env add SUPABASE_ALLOWED_TABLES preview
 npx vercel@57.0.0 env add MCP_API_KEY preview
 ```
@@ -177,3 +174,20 @@ npx vercel@57.0.0 rollback https://<previous-deployment>.vercel.app
 ## 인증 호환성
 
 현재 템플릿은 사전에 공유한 고정 `Authorization: Bearer <MCP_API_KEY>` header 방식입니다. 고정 header를 설정할 수 없는 클라이언트나 OAuth 자동 발견을 요구하는 클라이언트에는 그대로 연결할 수 없습니다. 그런 대상에는 Authorization Server, `withMcpAuth`, `/.well-known/oauth-protected-resource` endpoint를 추가해야 합니다.
+
+## Codex 개인 플러그인
+
+Codex 개인 marketplace 플러그인은 `bearer_token_env_var`로 기존 인증을 그대로 사용할 수 있습니다.
+
+- 플러그인: `~/plugins/mcp-ipostock`
+- marketplace: `~/.agents/plugins/marketplace.json`
+- MCP: `https://mcp-ipostock.vercel.app/mcp`
+- token 환경 변수: `MCP_IPOSTOCK_API_KEY`
+
+macOS에서 Codex 앱을 다시 열기 전에 다음 값을 설정합니다.
+
+```bash
+launchctl setenv MCP_IPOSTOCK_API_KEY "<MCP_API_KEY과 같은 값>"
+```
+
+Codex 앱의 Plugins에서 `Personal` → `IPOStock`을 설치하면 됩니다. ChatGPT/Codex의 새 플러그인 화면에 직접 등록하거나 공개 배포하려면 고정 API key가 아닌 OAuth 2.1 인증이 별도로 필요합니다.
