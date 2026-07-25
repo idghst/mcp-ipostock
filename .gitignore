@@ -2,3 +2,5 @@
 /.vercel
 .env*
 !.env.example
+/참고/
+/참고/
